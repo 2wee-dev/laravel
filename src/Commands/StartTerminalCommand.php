@@ -38,14 +38,18 @@ class StartTerminalCommand extends Command
             }
         }
 
+        $process = null;
+
         try {
-            $pid = $bin->start($port);
-            $this->info("2Wee web terminal started on port {$port} (PID {$pid}).");
-            $this->line('  Log: ' . storage_path('logs/two_wee_terminal.log'));
+            $process = $bin->open($port);
+            $this->info("2Wee web terminal running on port {$port} (PID {$bin->readPid()}).");
         } catch (\RuntimeException $e) {
             $this->error($e->getMessage());
             return self::FAILURE;
         }
+
+        // Block until the binary exits — Supervisor manages this process.
+        $bin->wait($process);
 
         return self::SUCCESS;
     }

@@ -70,30 +70,60 @@ class BinManager
         return file_exists("/proc/{$pid}");
     }
 
-    public function start(int $port): int
+    public function open(int $port): mixed
     {
         $bin = $this->binPath();
         $clientBin = $this->clientBinPath();
         $server = config('twowee.terminal.server_url', '');
         $logPath = storage_path('logs/two_wee_terminal.log');
 
-        $env = "TWO_WEE_CLIENT_BIN=" . escapeshellarg($clientBin);
+        $env = array_merge($_ENV, [
+            'TWO_WEE_CLIENT_BIN' => $clientBin,
+            'TWO_WEE_PORT' => (string) $port,
+        ]);
 
         if ($server !== '') {
-            $env .= ' TWO_WEE_SERVER=' . escapeshellarg($server);
+            $env['TWO_WEE_SERVER'] = $server;
         }
 
-        $cmd = "{$env} TWO_WEE_PORT={$port} {$bin} >> " . escapeshellarg($logPath) . ' 2>&1 & echo $!';
+        $descriptors = [
+            0 => ['file', '/dev/null', 'r'],
+            1 => ['file', $logPath, 'a'],
+            2 => ['file', $logPath, 'a'],
+        ];
 
-        $pid = (int) shell_exec($cmd);
+        $process = proc_open($bin, $descriptors, $pipes, null, $env);
 
-        if ($pid === 0) {
+        if ($process === false) {
             throw new RuntimeException('Failed to start two_wee_terminal.');
         }
 
-        $this->writePid($pid);
+        $status = proc_get_status($process);
 
-        return $pid;
+        if (! $status['running']) {
+            proc_close($process);
+            throw new RuntimeException('two_wee_terminal exited immediately. Check ' . $logPath);
+        }
+
+        $this->writePid($status['pid']);
+
+        return $process;
+    }
+
+    public function wait(mixed $process): void
+    {
+        while (true) {
+            $status = proc_get_status($process);
+
+            if (! $status['running']) {
+                break;
+            }
+
+            sleep(1);
+        }
+
+        proc_close($process);
+        $this->removePid();
     }
 
     public function stop(): void
