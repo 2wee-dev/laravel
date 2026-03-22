@@ -12,7 +12,7 @@ Download the binaries for your platform:
 php artisan 2wee:install-terminal
 ```
 
-This downloads `two_wee_terminal` and `two_wee_client` into the package's `bin/` directory and makes them executable. Run this once after installing the package, and again after upgrading.
+This downloads `two_wee_terminal` and `two_wee_client` into `storage/app/2wee/` and makes them executable. Run this once after installing the package, and again after upgrading.
 
 ## Start and stop the service
 
@@ -23,13 +23,6 @@ php artisan 2wee:check-terminal
 ```
 
 `2wee:start-terminal` starts `two_wee_terminal` as a background process on port 7681. The PID is stored in `storage/app/2wee/two_wee_terminal.pid` and logs are written to `storage/logs/two_wee_terminal.log`.
-
-Options for `2wee:start-terminal`:
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--port` | `7681` | Port to listen on |
-| `--force` | — | Restart if already running |
 
 ## Add the Blade component
 
@@ -58,7 +51,15 @@ Example — embed the terminal at a fixed height inside a layout:
 
 ## Configure the terminal
 
-Add these keys to `config/twowee.php` (or set them via `.env`):
+The only `.env` key you typically need is:
+
+```dotenv
+TWOWEE_QUIT_URL=https://your-app.com
+```
+
+This controls where the browser redirects when the user quits the TUI. If left empty, a "session ended" message is shown instead.
+
+Full list of available keys:
 
 ```php
 'terminal' => [
@@ -66,8 +67,8 @@ Add these keys to `config/twowee.php` (or set them via `.env`):
     'port' => env('TWOWEE_TERMINAL_PORT', 7681),
 
     // Lock the terminal to a specific server URL.
-    // If empty, the component uses {APP_URL}/{prefix} automatically.
-    'server_url' => env('TWOWEE_TERMINAL_SERVER', ''),
+    // Defaults to {APP_URL}/{prefix} — only set this if you need to override.
+    'server_url' => env('TWOWEE_TERMINAL_SERVER'),
 
     // Redirect here when the user quits the TUI application.
     // If empty, a "session ended" message is shown.
@@ -75,21 +76,57 @@ Add these keys to `config/twowee.php` (or set them via `.env`):
 ],
 ```
 
-Typical `.env` entries:
+## Deploy on Laravel Forge
+
+This is a complete, working setup on Laravel Forge.
+
+### 1. Environment variables
+
+In Forge → Sites → your site → **Environment**, set:
 
 ```dotenv
-TWOWEE_TERMINAL_PORT=7681
+APP_URL=https://your-app.com
+APP_ENV=staging
 TWOWEE_QUIT_URL=https://your-app.com
 ```
 
-## Configure Nginx for production
+`APP_ENV=staging` is required because Laravel blocks `migrate:fresh` in `production` environments. If you are not using `migrate:fresh` in your deploy script, you can set `APP_ENV=production`.
 
-In local development, the browser connects directly to `two_wee_terminal` on its port. In production, proxy the WebSocket and the terminal script through Nginx so everything runs on the standard HTTPS port.
+### 2. Deploy script
 
-Add this to your site's Nginx config:
+In Forge → Sites → your site → **Deploy Script**:
+
+```bash
+cd /home/forge/your-app.com/current
+
+composer install --no-dev --optimize-autoloader
+npm install
+npm run build
+php artisan config:clear
+php artisan migrate:fresh --force --seed
+php artisan 2wee:install-terminal --no-interaction
+php artisan 2wee:stop-terminal
+```
+
+`2wee:stop-terminal` signals the running process to stop. The supervisor daemon (set up in the next step) restarts it automatically after each deploy.
+
+### 3. Supervisor daemon
+
+In Forge → Servers → your server → **Daemons**, create a new daemon:
+
+| Field | Value |
+|-------|-------|
+| Command | `php /home/forge/your-app.com/current/artisan 2wee:start-terminal` |
+| User | `forge` |
+| Directory | `/home/forge/your-app.com/current` |
+
+The daemon starts automatically on boot and restarts if the process exits.
+
+### 4. Nginx configuration
+
+In Forge → Sites → your site → **Nginx Configuration**, add these two blocks inside the `server {}` block, before the `location /` block:
 
 ```nginx
-# WebSocket connections
 location /ws {
     proxy_pass         http://127.0.0.1:7681;
     proxy_http_version 1.1;
@@ -99,25 +136,45 @@ location /ws {
     proxy_read_timeout 3600s;
 }
 
-# Terminal JavaScript
 location /terminal.js {
     proxy_pass http://127.0.0.1:7681;
 }
 ```
 
-## Run as a daemon
+This proxies WebSocket connections and the terminal JavaScript through your HTTPS site to the `two_wee_terminal` service running on port 7681.
 
-For production, run `two_wee_terminal` as a persistent service. With Laravel Forge or any supervisor:
+### 5. First deploy
 
-```ini
-[program:two_wee_terminal]
-command=php artisan 2wee:start-terminal --force
-directory=/var/www/your-app
-autostart=true
-autorestart=true
+Push your code and trigger a deploy in Forge. After the deploy completes, the supervisor daemon starts `two_wee_terminal` automatically. Visit your site — the terminal should connect immediately.
+
+## Configure Nginx manually
+
+If you are not using Forge, add the same two blocks to your site's Nginx config:
+
+```nginx
+location /ws {
+    proxy_pass         http://127.0.0.1:7681;
+    proxy_http_version 1.1;
+    proxy_set_header   Upgrade $http_upgrade;
+    proxy_set_header   Connection "upgrade";
+    proxy_set_header   Host $host;
+    proxy_read_timeout 3600s;
+}
+
+location /terminal.js {
+    proxy_pass http://127.0.0.1:7681;
+}
 ```
 
-Or with a systemd unit:
+Then reload Nginx:
+
+```bash
+sudo nginx -s reload
+```
+
+## Run as a systemd service
+
+If you manage your own server without Forge:
 
 ```ini
 [Unit]
@@ -127,11 +184,18 @@ After=network.target
 [Service]
 User=www-data
 WorkingDirectory=/var/www/your-app
-ExecStart=/usr/bin/php artisan 2wee:start-terminal --force
+ExecStart=/usr/bin/php artisan 2wee:start-terminal
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
+```
+
+Enable and start it:
+
+```bash
+sudo systemctl enable two-wee-terminal
+sudo systemctl start two-wee-terminal
 ```
 
 ## Session security
