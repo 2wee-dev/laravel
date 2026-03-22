@@ -195,6 +195,12 @@ sudo systemctl enable two-wee-terminal
 sudo systemctl start two-wee-terminal
 ```
 
+## Latency
+
+The web terminal renders the TUI on the server and streams it to the browser. Every keystroke makes a round trip to your server before the screen updates. On a server close to your users this is imperceptible. On a server far away — for example, a user in Europe connecting to a server in the US — the latency will be noticeable.
+
+Deploy `two_wee_terminal` on a server in the same region as your users for the best experience. The CLI client (`two_wee_client`) has no such constraint — it runs locally and only the API calls travel over the network.
+
 ## Session security
 
 Each WebSocket connection gets an isolated session:
