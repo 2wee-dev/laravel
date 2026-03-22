@@ -139,7 +139,7 @@ If you are not using Forge, add the same two blocks to your site's Nginx config,
 
 The web terminal renders the TUI on the server and streams it to the browser. Every keystroke makes a round trip to your server before the screen updates. On a server close to your users this is imperceptible. On a server far away — for example, a user in Europe connecting to a server in the US — the latency will be noticeable.
 
-Deploy `two_wee_terminal` on a server in the same region as your users for the best experience. The [CLI client](https://2wee.dev/client/installation) has no such constraint — it runs locally and only the API calls travel over the network.
+Deploy `two_wee_terminal` on a server in the same region as your users for the best experience. The [CLI client](/client/installation) has no such constraint — it runs locally and only the API calls travel over the network.
 
 ## Session security
 
