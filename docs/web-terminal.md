@@ -1,38 +1,16 @@
 # Web Terminal
 
-The web terminal lets users run the TUI application directly in a browser — no local installation required. It is an optional addition to the core plugin and is independent of how the TUI client is distributed.
-
-Under the hood, a small bridge process called `two_wee_terminal` runs on your server. It spawns a `two_wee_client` process per WebSocket connection, streams the PTY over the socket, and serves the terminal JavaScript. Your Laravel app hosts the page; `two_wee_terminal` handles the connection.
-
-## Install the terminal binaries
-
-Download the binaries for your platform:
-
-```bash
-php artisan 2wee:install-terminal
-```
-
-This downloads `two_wee_terminal` and `two_wee_client` into `storage/app/2wee/` and makes them executable. Run this once after installing the package, and again after upgrading.
-
-## Start and stop the service
-
-```bash
-php artisan 2wee:start-terminal
-php artisan 2wee:stop-terminal
-php artisan 2wee:check-terminal
-```
-
-`2wee:start-terminal` starts `two_wee_terminal` as a background process on port 7681. The PID is stored in `storage/app/2wee/two_wee_terminal.pid` and logs are written to `storage/logs/two_wee_terminal.log`.
+The web terminal lets your users run the TUI application directly in a browser — no local installation required. You add a Blade component to a view, start a small background service, and it works.
 
 ## Add the Blade component
 
-Place the terminal component anywhere in a Blade view:
+Place the terminal component in a Blade view:
 
 ```blade
 <x-2wee::terminal />
 ```
 
-This renders a full-screen terminal connected to your application. The component reads its configuration from `config/twowee.php` — no attributes required for a standard setup.
+This renders a full-screen terminal connected to your application. No attributes are required for a standard setup.
 
 ### Available attributes
 
@@ -49,7 +27,32 @@ Example — embed the terminal at a fixed height inside a layout:
 <x-2wee::terminal height="600px" />
 ```
 
-## Configure the terminal
+## Install and start the service
+
+Download the binaries for your platform:
+
+```bash
+php artisan 2wee:install-terminal
+```
+
+This downloads `two_wee_terminal` and `two_wee_client` into `storage/app/2wee/` and makes them executable. Run this once after installing the package, and again after upgrading.
+
+Start the service:
+
+```bash
+php artisan 2wee:start-terminal
+```
+
+Other commands:
+
+```bash
+php artisan 2wee:stop-terminal
+php artisan 2wee:check-terminal
+```
+
+The service listens on port 7681. Logs are written to `storage/logs/two_wee_terminal.log`.
+
+## Configure
 
 The only `.env` key you typically need is:
 
@@ -59,7 +62,7 @@ TWOWEE_QUIT_URL=https://your-app.com
 
 This controls where the browser redirects when the user quits the TUI. If left empty, a "session ended" message is shown instead.
 
-Full list of available keys:
+Full list of available keys in `config/twowee.php`:
 
 ```php
 'terminal' => [
@@ -121,7 +124,7 @@ location /terminal.js {
 
 ### 4. Deploy
 
-Trigger a deploy. The background process starts `two_wee_terminal` automatically. Add `<x-2wee::terminal />` to any Blade view — the terminal connects immediately.
+Trigger a deploy. The background process starts `two_wee_terminal` automatically. Visit your page with `<x-2wee::terminal />` — the terminal connects immediately.
 
 ### Optional: override the server URL
 
@@ -130,10 +133,6 @@ By default the terminal connects to `{APP_URL}/{prefix}`, where `prefix` is conf
 ```dotenv
 TWOWEE_TERMINAL_SERVER=https://api.your-app.com/terminal
 ```
-
-## Configure Nginx manually
-
-If you are not using Forge, add the same two blocks to your site's Nginx config, then restart Nginx through your server's control panel or process manager.
 
 ## Latency
 
