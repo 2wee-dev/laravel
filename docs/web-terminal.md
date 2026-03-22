@@ -110,17 +110,16 @@ php artisan 2wee:stop-terminal
 
 `2wee:stop-terminal` signals the running process to stop. The supervisor daemon (set up in the next step) restarts it automatically after each deploy.
 
-### 3. Supervisor daemon
+### 3. Background process
 
-In Forge → Servers → your server → **Daemons**, create a new daemon:
+In Forge → Sites → your site → **Processes** → **Add background process**:
 
 | Field | Value |
 |-------|-------|
-| Command | `php /home/forge/your-app.com/current/artisan 2wee:start-terminal` |
-| User | `forge` |
+| Command | `php artisan 2wee:start-terminal` |
 | Directory | `/home/forge/your-app.com/current` |
 
-The daemon starts automatically on boot and restarts if the process exits.
+Forge manages this with Supervisor — it starts automatically on boot and restarts if the process exits.
 
 ### 4. Nginx configuration
 
