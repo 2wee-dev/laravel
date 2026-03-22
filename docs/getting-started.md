@@ -6,47 +6,26 @@
 
 ```bash
 composer require 2wee/laravel
-```
-
-Run the install command:
-
-```bash
 php artisan 2wee:install
 ```
 
-This publishes `config/twowee.php` and creates `app/TwoWee/Resources/`.
-
-Run the migration:
-
-```bash
-php artisan migrate
-```
-
-This creates the `twowee_tokens` table used for bearer token authentication.
+This publishes `config/twowee.php`, creates `app/TwoWee/Resources/`, and runs the migration that creates the `twowee_tokens` table used for authentication.
 
 ## Configure the package
 
-Edit `config/twowee.php`:
+Open `config/twowee.php` and set your app name and locale:
 
 ```php
-return [
-    'prefix'   => env('TWOWEE_PREFIX', 'terminal'), // URL prefix for all routes
-    'app_name' => 'My App',                          // Shown in the TUI menu bar
+'app_name' => 'My App',      // Shown in the TUI menu bar
 
-    'auth' => [
-        'username_field' => 'email', // 'email' or 'username'
-    ],
-
-    'locale' => [
-        'date_format'        => 'DD-MM-YYYY',
-        'decimal_separator'  => ',',
-        'thousand_separator' => '.',
-    ],
-
-    'work_date'  => null, // null = today
-    'ui_strings' => [],   // Override client UI text
-];
+'locale' => [
+    'date_format'        => 'DD-MM-YYYY',
+    'decimal_separator'  => ',',
+    'thousand_separator' => '.',
+],
 ```
+
+Everything else in the config file has sensible defaults and can be left as-is to start.
 
 ## Create your first resource
 
@@ -57,15 +36,6 @@ php artisan 2wee:resource CustomerResource --model=Customer
 This scaffolds `app/TwoWee/Resources/CustomerResource.php`. Edit it to define your form fields and table columns:
 
 ```php
-namespace App\TwoWee\Resources;
-
-use TwoWee\Laravel\Columns\TextColumn;
-use TwoWee\Laravel\Fields\Email;
-use TwoWee\Laravel\Fields\Phone;
-use TwoWee\Laravel\Fields\Text;
-use TwoWee\Laravel\Resource;
-use TwoWee\Laravel\Section;
-
 class CustomerResource extends Resource
 {
     protected static string $model = \App\Models\Customer::class;
@@ -108,35 +78,16 @@ php artisan 2wee:lookup CountryLookup --model=Country  # Reusable lookup
 php artisan 2wee:action PostSalesInvoice               # Screen action class
 ```
 
-## Connect a TUI client
+## Connect a client
 
-Point any TUI client at your server URL:
+Your application is now ready to accept TUI connections. Point a client at:
 
 ```
-http://your-app.test/terminal/menu/main
+https://your-app.com/terminal
 ```
 
-The plugin redirects to the login screen if authentication is required. See [Authentication](authentication.md) for setup.
-
-## Routes
-
-The plugin registers these routes automatically under the configured prefix (`/terminal` by default):
-
-| Method | URL | Purpose |
-|--------|-----|---------|
-| GET | `/terminal/auth/login` | Login form |
-| POST | `/terminal/auth/login` | Submit login |
-| GET | `/terminal/menu/main` | Main menu |
-| GET | `/terminal/screen/{resource}/list` | List screen |
-| GET | `/terminal/screen/{resource}/card/new` | New record form |
-| GET | `/terminal/screen/{resource}/card/{id}` | Existing record |
-| POST | `/terminal/screen/{resource}/card/new` | Create record |
-| POST | `/terminal/screen/{resource}/card/{id}/save` | Save changes |
-| POST | `/terminal/screen/{resource}/card/{id}/delete` | Delete record |
-| GET | `/terminal/lookup/{field_id}` | Lookup list |
-| GET | `/terminal/validate/{field_id}/{value}` | Blur validation |
-| GET | `/terminal/drilldown/{field_id}/{key}` | Drill-down data |
-| POST | `/terminal/action/{resource}/{id}/{action_id}` | Screen action |
+- **Browser** — add `<x-2wee::terminal />` to a Blade view. See [Web Terminal](web-terminal.md).
+- **Desktop** — download the CLI client and run `two_wee_client https://your-app.com`. See [Client Installation](/client/installation).
 
 ## Next steps
 
