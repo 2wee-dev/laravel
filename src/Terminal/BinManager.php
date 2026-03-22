@@ -83,35 +83,37 @@ class BinManager
             $env .= ' TWO_WEE_SERVER=' . escapeshellarg($server);
         }
 
-        // Run in the foreground so Supervisor manages the process lifecycle.
-        // This call does not return until the terminal process exits.
-        $cmd = "exec {$env} TWO_WEE_PORT={$port} {$bin} >> " . escapeshellarg($logPath) . ' 2>&1';
+        $cmd = "{$env} TWO_WEE_PORT={$port} {$bin} >> " . escapeshellarg($logPath) . ' 2>&1 & echo $!';
 
-        $pid = getmypid();
+        $pid = (int) shell_exec($cmd);
+
+        if ($pid === 0) {
+            throw new RuntimeException('Failed to start two_wee_terminal.');
+        }
+
         $this->writePid($pid);
-
-        passthru($cmd);
-
-        $this->removePid();
 
         return $pid;
     }
 
     public function stop(): void
     {
+        // Kill by PID file if available
         $pid = $this->readPid();
 
-        if ($pid === null) {
-            return;
+        if ($pid !== null) {
+            if (function_exists('posix_kill')) {
+                posix_kill($pid, SIGTERM);
+            } else {
+                exec("kill {$pid}");
+            }
+            $this->removePid();
         }
 
-        if (function_exists('posix_kill')) {
-            posix_kill($pid, SIGTERM);
-        } else {
-            exec("kill {$pid}");
-        }
-
-        $this->removePid();
+        // Also kill any process holding the port — handles stale PID files
+        // left behind by previous releases after a Forge deploy
+        $port = (int) config('twowee.terminal.port', 7681);
+        exec("fuser -k {$port}/tcp 2>/dev/null");
     }
 
     public function readPid(): ?int
