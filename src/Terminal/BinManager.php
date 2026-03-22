@@ -83,15 +83,16 @@ class BinManager
             $env .= ' TWO_WEE_SERVER=' . escapeshellarg($server);
         }
 
-        $cmd = "{$env} TWO_WEE_PORT={$port} {$bin} >> " . escapeshellarg($logPath) . ' 2>&1 & echo $!';
+        // Run in the foreground so Supervisor manages the process lifecycle.
+        // This call does not return until the terminal process exits.
+        $cmd = "exec {$env} TWO_WEE_PORT={$port} {$bin} >> " . escapeshellarg($logPath) . ' 2>&1';
 
-        $pid = (int) shell_exec($cmd);
-
-        if ($pid === 0) {
-            throw new RuntimeException('Failed to start two_wee_terminal.');
-        }
-
+        $pid = getmypid();
         $this->writePid($pid);
+
+        passthru($cmd);
+
+        $this->removePid();
 
         return $pid;
     }
