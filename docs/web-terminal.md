@@ -97,8 +97,6 @@ TWOWEE_QUIT_URL=https://your-app.com
 In Forge → Sites → your site → **Deploy Script**:
 
 ```bash
-cd /home/forge/your-app.com/current
-
 composer install --no-dev --optimize-autoloader
 npm install
 npm run build
