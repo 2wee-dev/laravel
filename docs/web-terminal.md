@@ -125,7 +125,7 @@ Trigger a deploy. The background process starts `two_wee_terminal` automatically
 
 ### Optional: override the server URL
 
-By default the terminal connects to `{APP_URL}/terminal`. If your 2Wee backend runs on a different server, set:
+By default the terminal connects to `{APP_URL}/{prefix}`, where `prefix` is configured in `config/twowee.php` (default: `terminal`). If your 2Wee backend runs on a different server, set:
 
 ```dotenv
 TWOWEE_TERMINAL_SERVER=https://api.your-app.com/terminal
