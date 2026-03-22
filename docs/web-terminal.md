@@ -135,32 +135,6 @@ TWOWEE_TERMINAL_SERVER=https://api.your-app.com/terminal
 
 If you are not using Forge, add the same two blocks to your site's Nginx config, then restart Nginx through your server's control panel or process manager.
 
-## Run as a systemd service
-
-If you manage your own server without Forge:
-
-```ini
-[Unit]
-Description=2Wee Web Terminal
-After=network.target
-
-[Service]
-User=www-data
-WorkingDirectory=/var/www/your-app
-ExecStart=/usr/bin/php artisan 2wee:start-terminal
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start it:
-
-```bash
-sudo systemctl enable two-wee-terminal
-sudo systemctl start two-wee-terminal
-```
-
 ## Latency
 
 The web terminal renders the TUI on the server and streams it to the browser. Every keystroke makes a round trip to your server before the screen updates. On a server close to your users this is imperceptible. On a server far away — for example, a user in Europe connecting to a server in the US — the latency will be noticeable.
