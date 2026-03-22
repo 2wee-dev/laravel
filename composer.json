@@ -1,0 +1,39 @@
+{
+    "name": "2wee/laravel",
+    "description": "Laravel SDK for the 2wee terminal UI protocol",
+    "keywords": ["laravel", "2wee", "terminal", "ui"],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TwoWee\\Laravel\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TwoWee\\Laravel\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TwoWee\\Laravel\\TwoWeeServiceProvider"
+            ],
+            "aliases": {
+                "TwoWee": "TwoWee\\Laravel\\Facades\\TwoWee"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
