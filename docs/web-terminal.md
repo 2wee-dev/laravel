@@ -78,37 +78,18 @@ Full list of available keys:
 
 ## Deploy on Laravel Forge
 
-This is a complete, working setup on Laravel Forge.
+### 1. Add to your deploy script
 
-### 1. Environment variables
-
-In Forge → Sites → your site → **Environment**, set:
-
-```dotenv
-APP_URL=https://your-app.com
-APP_ENV=staging
-TWOWEE_QUIT_URL=https://your-app.com
-```
-
-`APP_ENV=staging` is required because Laravel blocks `migrate:fresh` in `production` environments. If you are not using `migrate:fresh` in your deploy script, you can set `APP_ENV=production`.
-
-### 2. Deploy script
-
-In Forge → Sites → your site → **Deploy Script**:
+In Forge → Sites → your site → **Deployments**, add these two lines at the end of your existing deploy script:
 
 ```bash
-composer install --no-dev --optimize-autoloader
-npm install
-npm run build
-php artisan config:clear
-php artisan migrate:fresh --force --seed
 php artisan 2wee:install-terminal --no-interaction
 php artisan 2wee:stop-terminal
 ```
 
-`2wee:stop-terminal` signals the running process to stop. The supervisor daemon (set up in the next step) restarts it automatically after each deploy.
+`2wee:install-terminal` downloads the binaries on first deploy and skips the download on subsequent deploys. `2wee:stop-terminal` signals the running process to stop so the background process (set up next) can restart it with the new release.
 
-### 3. Background process
+### 2. Add a background process
 
 In Forge → Sites → your site → **Processes** → **Add background process**:
 
@@ -117,9 +98,9 @@ In Forge → Sites → your site → **Processes** → **Add background process*
 | Command | `php artisan 2wee:start-terminal` |
 | Directory | `/home/forge/your-app.com/current` |
 
-Forge manages this with Supervisor — it starts automatically on boot and restarts if the process exits.
+Forge manages this with Supervisor — it starts automatically on boot and restarts after each deploy.
 
-### 4. Nginx configuration
+### 3. Configure Nginx
 
 In Forge → Sites → your site → **Nginx Configuration**, add these two blocks inside the `server {}` block, before the `location /` block:
 
@@ -138,11 +119,17 @@ location /terminal.js {
 }
 ```
 
-This proxies WebSocket connections and the terminal JavaScript through your HTTPS site to the `two_wee_terminal` service running on port 7681.
+### 4. Deploy
 
-### 5. First deploy
+Trigger a deploy. The background process starts `two_wee_terminal` automatically. Add `<x-2wee::terminal />` to any Blade view — the terminal connects immediately.
 
-Push your code and trigger a deploy in Forge. After the deploy completes, the supervisor daemon starts `two_wee_terminal` automatically. Visit your site — the terminal should connect immediately.
+### Optional: override the server URL
+
+By default the terminal connects to `{APP_URL}/terminal`. If your 2Wee backend runs on a different server, set:
+
+```dotenv
+TWOWEE_TERMINAL_SERVER=https://api.your-app.com/terminal
+```
 
 ## Configure Nginx manually
 
