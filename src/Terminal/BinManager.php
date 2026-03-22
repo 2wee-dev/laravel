@@ -8,7 +8,7 @@ class BinManager
 {
     public function binPath(): string
     {
-        return __DIR__ . '/../../bin/two_wee_terminal-' . $this->platform();
+        return storage_path('app/2wee/two_wee_terminal-' . $this->platform());
     }
 
     public function pidPath(): string
@@ -18,9 +18,7 @@ class BinManager
 
     public function clientBinPath(): string
     {
-        $sibling = __DIR__ . '/../../bin/two_wee_client-' . $this->platform();
-
-        return file_exists($sibling) ? $sibling : 'two_wee_client';
+        return storage_path('app/2wee/two_wee_client-' . $this->platform());
     }
 
     public function isInstalled(): bool
