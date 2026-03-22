@@ -142,7 +142,9 @@ class BinManager
     {
         $platform = $this->platform();
 
-        return "https://github.com/2wee-dev/web-terminal/releases/latest/download/{$binary}-{$platform}";
+        $repo = $binary === 'two_wee_client' ? 'client' : 'web-terminal';
+
+        return "https://github.com/2wee-dev/{$repo}/releases/latest/download/{$binary}-{$platform}";
     }
 
     private function platform(): string
