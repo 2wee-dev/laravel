@@ -128,6 +128,12 @@ class BinManager
 
     private function writePid(int $pid): void
     {
+        $dir = dirname($this->pidPath());
+
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
         file_put_contents($this->pidPath(), $pid);
     }
 
