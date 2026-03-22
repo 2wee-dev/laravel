@@ -133,28 +133,7 @@ TWOWEE_TERMINAL_SERVER=https://api.your-app.com/terminal
 
 ## Configure Nginx manually
 
-If you are not using Forge, add the same two blocks to your site's Nginx config:
-
-```nginx
-location /ws {
-    proxy_pass         http://127.0.0.1:7681;
-    proxy_http_version 1.1;
-    proxy_set_header   Upgrade $http_upgrade;
-    proxy_set_header   Connection "upgrade";
-    proxy_set_header   Host $host;
-    proxy_read_timeout 3600s;
-}
-
-location /terminal.js {
-    proxy_pass http://127.0.0.1:7681;
-}
-```
-
-Then reload Nginx:
-
-```bash
-sudo nginx -s reload
-```
+If you are not using Forge, add the same two blocks to your site's Nginx config, then restart Nginx through your server's control panel or process manager.
 
 ## Run as a systemd service
 
