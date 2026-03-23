@@ -18,7 +18,7 @@ class BinManager
 
     public function clientBinPath(): string
     {
-        return storage_path('app/2wee/two_wee_client-' . $this->platform());
+        return storage_path('app/2wee/2wee-' . $this->platform());
     }
 
     public function isInstalled(): bool
@@ -29,7 +29,7 @@ class BinManager
     public function install(): void
     {
         $this->downloadBinary('two_wee_terminal', $this->binPath());
-        $this->downloadBinary('two_wee_client', $this->clientBinPath());
+        $this->downloadBinary('2wee', $this->clientBinPath());
     }
 
     private function downloadBinary(string $name, string $dest): void
@@ -179,7 +179,7 @@ class BinManager
     {
         $platform = $this->platform();
 
-        $repo = $binary === 'two_wee_client' ? 'client' : 'web-terminal';
+        $repo = $binary === '2wee' ? 'client' : 'web-terminal';
 
         return "https://github.com/2wee-dev/{$repo}/releases/latest/download/{$binary}-{$platform}";
     }
